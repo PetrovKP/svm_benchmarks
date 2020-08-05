@@ -23,7 +23,9 @@ import timeit
 import os
 import argparse
 
-from sklearn.svm import SVC
+# from sklearn.svm import SVC
+from thundersvm import SVC
+
 from sklearn.metrics import log_loss
 
 cache_size = 8*1024 # 8 GB
