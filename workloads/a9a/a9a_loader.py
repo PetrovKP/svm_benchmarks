@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2020 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 import os
 import sys
@@ -20,6 +20,7 @@ import pandas as pd
 
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
+
 
 def a9a(root_dir=None):
     """
@@ -63,7 +64,8 @@ def a9a(root_dir=None):
     filename_a9a_x_test = os.path.join(dataset_dir, 'a9a_x_test.csv')
     filename_a9a_y_test = os.path.join(dataset_dir, 'a9a_y_test.csv')
 
-    x, y = fetch_openml(name='a9a', return_X_y=True, as_frame=False, data_home=dataset_dir)
+    x, y = fetch_openml(name='a9a', return_X_y=True,
+                        as_frame=False, data_home=dataset_dir)
     x = pd.DataFrame(x.todense())
     y = pd.DataFrame(y)
 
@@ -72,17 +74,22 @@ def a9a(root_dir=None):
     print('a9a dataset is downloaded')
     print('reading CSV file...')
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=11)
-    x_train.to_csv(os.path.join(dataset_dir, filename_a9a_x_train), header=False, index=False)
+    x_train, x_test, y_train, y_test = train_test_split(
+        x, y, test_size=0.2, random_state=11)
+    x_train.to_csv(os.path.join(dataset_dir, filename_a9a_x_train),
+                   header=False, index=False)
     print(f'a9a x train dataset {x_train.shape} is ready to be used')
 
-    y_train.to_csv(os.path.join(dataset_dir, filename_a9a_y_train), header=False, index=False)
+    y_train.to_csv(os.path.join(dataset_dir, filename_a9a_y_train),
+                   header=False, index=False)
     print(f'a9a y train dataset {y_train.shape} is ready to be used')
 
-    x_test.to_csv(os.path.join(dataset_dir, filename_a9a_x_test), header=False, index=False)
+    x_test.to_csv(os.path.join(dataset_dir, filename_a9a_x_test),
+                  header=False, index=False)
     print(f'a9a x test dataset {x_test.shape} is ready to be used')
 
-    y_test.to_csv(os.path.join(dataset_dir, filename_a9a_y_test), header=False, index=False)
+    y_test.to_csv(os.path.join(dataset_dir, filename_a9a_y_test),
+                  header=False, index=False)
     print(f'a9a y test dataset {y_test.shape} is ready to be used')
 
 

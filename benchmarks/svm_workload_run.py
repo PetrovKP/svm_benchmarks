@@ -96,6 +96,5 @@ if arg_name_workload in [name_workload, 'all']:
     x_train, x_test, y_train, y_test = load_data(name_workload)
     times_worloads.append(run_svm_workload(name_workload, x_train, x_test, y_train, y_test, 
                                            C=100, kernel='linear'))
-
 if len(times_worloads) == 0:
     raise 'Not workload {} for this benchmarks'.format(name_workload)
