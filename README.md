@@ -3,14 +3,11 @@
 ### Dependencies
 
 ```bash
-conda install -c intel scikit-learn pandas daal4py==0.2020.2
+conda install -c intel scikit-learn pandas
 ```
 
 ### Setting up the environment
 
-For use Intel DAAL solvers which makes it possible to get a performance gain without any code changes.
-```bash
-export USE_DAAL4PY_SKLEARN=yes
 ```
 Directory for saving and unloading datasets while the benchmark is running
 ```bash
@@ -36,3 +33,15 @@ For runs of the selected workload:
 ```bash
 python benchmarks/svm_workload_run.py --workload a9a
 ```
+
+You can choose library: `sklearn`, `cuml`, `thundersvm`, `idp_sklearn`
+For runs of the selected library. 
+By default using sklearn with oneDAL optimizations (`idp_sklearn`). 
+Example for thundersvm library:
+
+```bash
+python benchmarks/svm_workload_run.py --library thundersvm 
+```
+
+*NOTE: for thundersvm/cuml runs need thundersvm/cuml library. 
+Can you download with help pip or conda*

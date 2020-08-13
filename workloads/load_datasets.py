@@ -33,9 +33,9 @@ dataset_loaders = {
     "ijcnn": ijcnn,
     "connect": connect,
     "sensit": sensit,
-    "gisette": gisette,
-    "news20": news20,
-    "klaverjas": klaverjas,
+    # "gisette": gisette,
+    # "news20": news20,
+    # "klaverjas": klaverjas,
     # "rcv1": rcv1,
     # "mnist": mnist,
 }

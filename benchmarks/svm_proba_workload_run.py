@@ -65,6 +65,19 @@ def load_data(name_workload):
     y_test_path = os.path.join(
         dataset_dir, '{}_y_test.csv'.format(name_workload))
     y_test = pd.read_csv(y_test_path, header=None)
+
+    x_train = np.asfortranarray(x_train, np.float64)
+    x_test = np.asfortranarray(x_test, np.float64)
+    y_train = np.asfortranarray(y_train, np.float64)
+    y_test = np.asfortranarray(y_test, np.float64)
+
+
+    # if arg_name_library == 'cuml':
+    #     import cudf
+    #     x_train = cudf.DataFrame.from_pandas(x_train)
+    #     y_train = cudf.DataFrame.from_pandas(y_train)
+    #     x_test = cudf.DataFrame.from_pandas(x_test)
+    #     y_test = cudf.DataFrame.from_pandas(y_test)
     return x_train, x_test, y_train, y_test
 
 
@@ -197,3 +210,4 @@ if arg_name_workload in [name_workload, 'all']:
 
 if len(times_worloads) == 0:
     raise 'Not workload {} for this benchmarks'.format(name_workload)
+

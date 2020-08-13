@@ -23,8 +23,27 @@ import timeit
 import os
 import argparse
 
-# from sklearn.svm import SVC
-from thundersvm import SVC
+parser = argparse.ArgumentParser()
+parser.add_argument('--workload', type=str, default='all', 
+    help='Choose worload for SVM. Default all worloads')
+parser.add_argument('--library', type=str, default='idp_sklearn',
+                    choices=['sklearn', 'thunder', 'cuml', 'idp_sklearn'])
+
+args = parser.parse_args()
+arg_name_workload = args.workload
+arg_name_library = args.library
+times_worloads = []
+
+if arg_name_library == 'idp_sklearn':
+    from daal4py.sklearn import patch_sklearn
+    patch_sklearn()
+    from sklearn.svm import SVC
+elif arg_name_library == 'sklearn':
+    from sklearn.svm import SVC
+elif arg_name_library == 'thunder':
+    from thundersvm import SVC
+elif arg_name_library == 'cuml':
+    from cuml import SVC
 
 from sklearn.metrics import accuracy_score
 
@@ -60,13 +79,6 @@ def run_svm_workload(workload_name, x_train, x_test, y_train, y_test, C=1.0, ker
     print('Workload {} {}x{} running {:.2f} (sec) have accuracy_score: {:.3f}'.format(workload_name, 
         x_train.shape[0], x_train.shape[1], time_run, acc))
     return time_run
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--workload', type=str, default='all', 
-    help='Choose worload for SVM. Default all worloads')
-args = parser.parse_args()
-arg_name_workload = args.workload
-times_worloads = []
 
 name_workload = 'a9a'
 if arg_name_workload in [name_workload, 'all']:
