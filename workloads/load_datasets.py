@@ -22,12 +22,22 @@ from a9a.a9a_loader import a9a
 from ijcnn.ijcnn_loader import ijcnn
 from connect.connect_loader import connect
 from sensit.sensit_loader import sensit
+from gisette.gisette_loader import gisette
+from news20.news20_loader import news20
+from mnist.mnist_loader import mnist
+from rcv1.rcv1_loader import rcv1
+from klaverjas.klaverjas_loader import klaverjas
 
 dataset_loaders = {
     "a9a": a9a,
     "ijcnn": ijcnn,
     "connect": connect,
     "sensit": sensit,
+    # "gisette": gisette,
+    # "news20": news20,
+    # "klaverjas": klaverjas,
+    # "rcv1": rcv1,
+    # "mnist": mnist,
 }
 
 if __name__ == '__main__':
