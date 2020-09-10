@@ -16,13 +16,12 @@
 
 import os
 import sys
-import pandas as pd
 
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 
 
-def mnist(root_dir=None):
+def skin_segmentation(root_dir=None):
     """
     Abstract:
     The Skin Segmentation dataset is constructed over B, G, R color space.
@@ -45,53 +44,58 @@ def mnist(root_dir=None):
     where first three columns are B,G,R (x1,x2, and x3 features)
     values and fourth column is of the class labels (decision variable y).
 
-    mnist X train dataset (196045, 3)
-    mnist y train dataset (196045, 1)
-    mnist X test dataset  (49012,  3)
-    mnist y train dataset (49012,  1)
+    skin_segmentation X train dataset (196045, 3)
+    skin_segmentation y train dataset (196045, 1)
+    skin_segmentation X test dataset  (49012,  3)
+    skin_segmentation y train dataset (49012,  1)
 
     """
 
-    dataset_dir = os.path.join(root_dir, 'workloads', 'mnist', 'dataset')
+    dataset_dir = os.path.join(
+        root_dir, 'workloads', 'skin_segmentation', 'dataset')
 
     try:
         os.makedirs(dataset_dir)
     except FileExistsError:
         pass
 
-    filename_mnist_x_train = os.path.join(dataset_dir, 'mnist_x_train.csv')
-    filename_mnist_y_train = os.path.join(dataset_dir, 'mnist_y_train.csv')
-    filename_mnist_x_test = os.path.join(dataset_dir, 'mnist_x_test.csv')
-    filename_mnist_y_test = os.path.join(dataset_dir, 'mnist_y_test.csv')
+    filename_skin_segmentation_x_train = os.path.join(
+        dataset_dir, 'skin_segmentation_x_train.csv')
+    filename_skin_segmentation_y_train = os.path.join(
+        dataset_dir, 'skin_segmentation_y_train.csv')
+    filename_skin_segmentation_x_test = os.path.join(
+        dataset_dir, 'skin_segmentation_x_test.csv')
+    filename_skin_segmentation_y_test = os.path.join(
+        dataset_dir, 'skin_segmentation_y_test.csv')
 
-    X, y = fetch_openml(name='mnist_784', return_X_y=True,
-                        as_frame=True, data_home=dataset_dir)
-    y = y.astype(int)
-    X = X / 255
+    X, y = fetch_openml(name='skin-segmentation',
+                        return_X_y=True, as_frame=True, data_home=dataset_dir)
     print(X.shape, y.shape)
+    y = y.astype(int)
+    y[y == 2] = 0
 
-    print('mnist dataset is downloaded')
+    print('skin_segmentation dataset is downloaded')
     print('reading CSV file...')
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=10000, shuffle=False)
+        X, y, test_size=0.2, random_state=42)
     X_train.to_csv(os.path.join(
-        dataset_dir, filename_mnist_x_train), header=False, index=False)
-    print(f'mnist X train dataset {X_train.shape} is ready to be used')
+        dataset_dir, filename_skin_segmentation_x_train), header=False, index=False)
+    print(f'skin_segmentation X train dataset {X_train.shape} is ready to be used')
 
     y_train.to_csv(os.path.join(
-        dataset_dir, filename_mnist_y_train), header=False, index=False)
-    print(f'mnist y train dataset {y_train.shape} is ready to be used')
+        dataset_dir, filename_skin_segmentation_y_train), header=False, index=False)
+    print(f'skin_segmentation y train dataset {y_train.shape} is ready to be used')
 
-    X_test.to_csv(os.path.join(dataset_dir, filename_mnist_x_test),
-                  header=False, index=False)
-    print(f'mnist X test dataset {X_test.shape} is ready to be used')
+    X_test.to_csv(os.path.join(
+        dataset_dir, filename_skin_segmentation_x_test), header=False, index=False)
+    print(f'skin_segmentation X test dataset {X_test.shape} is ready to be used')
 
-    y_test.to_csv(os.path.join(dataset_dir, filename_mnist_y_test),
-                  header=False, index=False)
-    print(f'mnist y train dataset {y_test.shape} is ready to be used')
+    y_test.to_csv(os.path.join(
+        dataset_dir, filename_skin_segmentation_y_test), header=False, index=False)
+    print(f'skin_segmentation y train dataset {y_test.shape} is ready to be used')
 
 
 if __name__ == '__main__':
     root_dir = os.environ['DATASETSROOT']
-    mnist(root_dir)
+    skin_segmentation(root_dir)

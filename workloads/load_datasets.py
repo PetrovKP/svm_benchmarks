@@ -27,17 +27,29 @@ from news20.news20_loader import news20
 from mnist.mnist_loader import mnist
 from rcv1.rcv1_loader import rcv1
 from klaverjas.klaverjas_loader import klaverjas
+from skin_segmentation.skin_segmentation_loader import skin_segmentation
+from covertype.covertype_loader import covertype
+from creditcard.creditcard_loader import creditcard
+from codrnanorm.codrnanorm_loader import codrnanorm
+from aloi.aloi_loader import aloi
+from bng.bng_loader import bng
 
 dataset_loaders = {
     "a9a": a9a,
     "ijcnn": ijcnn,
     "connect": connect,
     "sensit": sensit,
-    # "gisette": gisette,
+    "gisette": gisette,
+    "klaverjas": klaverjas,
+    "mnist": mnist,
+    "skin_segmentation": skin_segmentation,
+    "covertype": covertype,
+    "creditcard": creditcard,
+    "codrnanorm": codrnanorm,
+    # "aloi": aloi,
+    # "bng": bng,
     # "news20": news20,
-    # "klaverjas": klaverjas,
     # "rcv1": rcv1,
-    # "mnist": mnist,
 }
 
 if __name__ == '__main__':

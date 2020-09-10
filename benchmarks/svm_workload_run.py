@@ -51,6 +51,20 @@ elif arg_name_library == 'cuml':
 cache_size = 8*1024  # 8 GB
 tol = 1e-3
 
+workloads = {
+    'a9a':               {'C': 500.0,  'kernel': 'rbf'},
+    'ijcnn':             {'C': 1000.0, 'kernel': 'linear'},
+    'sensit':            {'C': 500.0,  'kernel': 'linear'},
+    'connect':           {'C': 100.0,  'kernel': 'linear'},
+    'gisette':           {'C': 0.0015, 'kernel': 'linear'},
+    'mnist':             {'C': 100.0,  'kernel': 'linear'},
+    'klaverjas':         {'C': 1.0,    'kernel': 'rbf'},
+    'skin_segmentation': {'C': 1.0,    'kernel': 'rbf'},
+    'covertype':         {'C': 100.0,  'kernel': 'rbf'},
+    'creditcard':        {'C': 100.0,  'kernel': 'linear'},
+    'codrnanorm':        {'C': 1000.0, 'kernel': 'linear'},
+}
+
 
 def load_data(name_workload):
     root_dir = os.environ['DATASETSROOT']
@@ -79,42 +93,32 @@ def run_svm_workload(workload_name, x_train, x_test, y_train, y_test, C=1.0, ker
     t0 = timeit.default_timer()
     clf.fit(x_train, y_train)
     t1 = timeit.default_timer()
-    time_run = t1 - t0
+    time_fit_train_run = t1 - t0
 
+    t0 = timeit.default_timer()
+    y_pred_train = clf.predict(x_train)
+    t1 = timeit.default_timer()
+    time_predict_train_run = t1 - t0
+    acc_train = accuracy_score(y_train, y_pred_train)
+
+    t0 = timeit.default_timer()
     y_pred = clf.predict(x_test)
-    acc = accuracy_score(y_pred, y_test)
-    print('Workload {} {}x{} running {:.2f} (sec) have accuracy_score: {:.3f}'.format(workload_name,
-                                                                                      x_train.shape[0], x_train.shape[1], time_run, acc))
-    return time_run
+    t1 = timeit.default_timer()
+    time_predict_test_run = t1 - t0
+    acc_test = accuracy_score(y_test, y_pred)
+
+    print('{}: n_samples:{}; n_features:{}; n_classes:{}; C:{}; kernel:{}'.format(
+        workload_name, x_train.shape[0], x_train.shape[1], len(np.unique(y_train)), C, kernel))
+    print('Fit   [Train n_samples:{:6d}]: {:6.2f} sec'.format(
+        x_train.shape[0], time_fit_train_run))
+    print('Infer [Train n_samples:{:6d}]: {:6.2f} sec. accuracy_score: {:.3f}'.format(
+        x_train.shape[0], time_predict_train_run, acc_train))
+    print('Infer [Test  n_samples:{:6d}]: {:6.2f} sec. accuracy_score: {:.3f}'.format(
+        x_test.shape[0], time_predict_test_run, acc_test))
 
 
-name_workload = 'a9a'
-if arg_name_workload in [name_workload, 'all']:
-    # Predict whether income exceeds $50K/yr based on census data in the USA
-    x_train, x_test, y_train, y_test = load_data(name_workload)
-    times_worloads.append(run_svm_workload(name_workload, x_train, x_test, y_train, y_test,
-                                           C=500, kernel='rbf'))
-
-name_workload = 'ijcnn'
-if arg_name_workload in [name_workload, 'all']:
-    # Predict connections in an online social network
-    x_train, x_test, y_train, y_test = load_data(name_workload)
-    times_worloads.append(run_svm_workload(name_workload, x_train, x_test, y_train, y_test,
-                                           C=1000, kernel='linear'))
-
-name_workload = 'sensit'
-if arg_name_workload in [name_workload, 'all']:
-    # Vehicle type classification for intelligent transportation systems based on info from sensors.
-    name_workload = 'sensit'
-    x_train, x_test, y_train, y_test = load_data(name_workload)
-    times_worloads.append(run_svm_workload(name_workload, x_train, x_test, y_train, y_test,
-                                           C=500, kernel='linear'))
-
-name_workload = 'connect'
-if arg_name_workload in [name_workload, 'all']:
-    # Predict next moves in game of connect-4.
-    x_train, x_test, y_train, y_test = load_data(name_workload)
-    times_worloads.append(run_svm_workload(name_workload, x_train, x_test, y_train, y_test,
-                                           C=100, kernel='linear'))
-if len(times_worloads) == 0:
-    raise 'Not workload {} for this benchmarks'.format(name_workload)
+for name_workload, params in workloads.items():
+    if arg_name_workload in [name_workload, 'all']:
+        x_train, x_test, y_train, y_test = load_data(name_workload)
+        run_svm_workload(name_workload, x_train, x_test, y_train, y_test,
+                         C=params['C'], kernel=params['kernel'])
