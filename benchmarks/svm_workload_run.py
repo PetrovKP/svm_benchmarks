@@ -61,7 +61,7 @@ workloads = {
     'klaverjas':         {'C': 1.0,    'kernel': 'rbf'},
     'skin_segmentation': {'C': 1.0,    'kernel': 'rbf'},
     'covertype':         {'C': 100.0,  'kernel': 'rbf'},
-    'creditcard':        {'C': 100.0,  'kernel': 'linear'},
+    # 'creditcard':        {'C': 100.0,  'kernel': 'linear'},
     'codrnanorm':        {'C': 1000.0, 'kernel': 'linear'},
 }
 
