@@ -31,8 +31,8 @@ from skin_segmentation.skin_segmentation_loader import skin_segmentation
 from covertype.covertype_loader import covertype
 from creditcard.creditcard_loader import creditcard
 from codrnanorm.codrnanorm_loader import codrnanorm
-from aloi.aloi_loader import aloi
-from bng.bng_loader import bng
+# from aloi.aloi_loader import aloi
+# from bng.bng_loader import bng
 
 dataset_loaders = {
     "a9a": a9a,
