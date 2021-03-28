@@ -14,44 +14,59 @@
 # limitations under the License.
 # ===============================================================================
 
-from sklearn.metrics import accuracy_score
 import argparse
 import os
 import timeit
 import numpy as np
 import pandas as pd
 import warnings
+
+from sklearn.preprocessing import StandardScaler
+
 warnings.filterwarnings("ignore")
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--workload', type=str, default='all',
                     help='Choose worload for SVM. Default all worloads')
-parser.add_argument('--library', type=str, default='idp_sklearn',
-                    choices=['sklearn', 'thunder', 'cuml', 'idp_sklearn'],
-                    help='Choose library for SVM. Default idp_sklearn')
+parser.add_argument('--task', type=str, default='svc',
+                    choices=['svc', 'svc_proba', 'svr'],
+                    help='Choose task for SVM. Default svc')
+parser.add_argument('--library', type=str, default='sklearn-intelex',
+                    choices=['sklearn', 'onedal',
+                             'thunder', 'cuml', 'sklearn-intelex'],
+                    help='Choose library for SVM. Default sklearn-intelex')
 
 args = parser.parse_args()
 arg_name_workload = args.workload
 arg_name_library = args.library
+arg_name_task = args.task
 times_worloads = []
 
-if arg_name_library == 'idp_sklearn':
+if arg_name_library == 'sklearn-intelex':
     from daal4py.sklearn import patch_sklearn
     patch_sklearn()
-    from sklearn.svm import SVC
+    from sklearn.svm import SVR, SVC
+    from sklearn.metrics import mean_squared_error, accuracy_score, log_loss
+elif arg_name_library == 'onedal':
+    from daal4py.onedal.svm import SVR, SVC
+    from sklearn.metrics import mean_squared_error, accuracy_score, log_loss
 elif arg_name_library == 'sklearn':
-    from sklearn.svm import SVC
+    from sklearn.svm import SVR, SVC
+    from sklearn.metrics import mean_squared_error, accuracy_score, log_loss
 elif arg_name_library == 'thunder':
-    from thundersvm import SVC
+    from thundersvm import SVR, SVC
+    from sklearn.metrics import mean_squared_error, accuracy_score, log_loss
 elif arg_name_library == 'cuml':
-    from cuml import SVC
+    from cuml import SVR, SVC
+    from cuml.metrics import mean_squared_error, accuracy_score, log_loss
 
 
-cache_size = 8*1024  # 8 GB
+cache_size = 2*1024  # 8 GB
 tol = 1e-3
 
-workloads = {
+
+svc_workloads = {
     'a9a':               {'C': 500.0,  'kernel': 'rbf'},
     'ijcnn':             {'C': 1000.0, 'kernel': 'linear'},
     'sensit':            {'C': 500.0,  'kernel': 'linear'},
@@ -61,8 +76,17 @@ workloads = {
     'klaverjas':         {'C': 1.0,    'kernel': 'rbf'},
     'skin_segmentation': {'C': 1.0,    'kernel': 'rbf'},
     'covertype':         {'C': 100.0,  'kernel': 'rbf'},
-    # 'creditcard':        {'C': 100.0,  'kernel': 'linear'},
+    'creditcard':        {'C': 100.0,  'kernel': 'linear'},
     'codrnanorm':        {'C': 1000.0, 'kernel': 'linear'},
+    'aloi':              {'C': 10.0,   'kernel': 'rbf'},
+    'letter':            {'C': 10.0,   'kernel': 'rbf'},
+}
+
+svr_workloads = {
+    # 'year_prediction':  {'C': 100.0,  'kernel': 'linear'},
+    # 'california_housing':  {'C': 0.1,  'kernel': 'poly'},
+    'fried': {'C': 2.0,  'kernel': 'linear'},
+    'twodplanes': {'C': 10.0,  'kernel': 'rbf', 'epsilon': 0.5},
 }
 
 
@@ -71,54 +95,88 @@ def load_data(name_workload):
     dataset_dir = os.path.join(root_dir, 'workloads', name_workload, 'dataset')
     x_train_path = os.path.join(
         dataset_dir, '{}_x_train.csv'.format(name_workload))
-    x_train = pd.read_csv(x_train_path, header=None)
+    x_train = pd.read_csv(x_train_path, header=None, dtype=np.float64)
     x_test_path = os.path.join(
         dataset_dir, '{}_x_test.csv'.format(name_workload))
-    x_test = pd.read_csv(x_test_path, header=None)
+    x_test = pd.read_csv(x_test_path, header=None, dtype=np.float64)
     y_train_path = os.path.join(
         dataset_dir, '{}_y_train.csv'.format(name_workload))
-    y_train = pd.read_csv(y_train_path, header=None)
+    y_train = pd.read_csv(y_train_path, header=None, dtype=np.float64)
     y_test_path = os.path.join(
         dataset_dir, '{}_y_test.csv'.format(name_workload))
-    y_test = pd.read_csv(y_test_path, header=None)
+    y_test = pd.read_csv(y_test_path, header=None, dtype=np.float64)
     return x_train, x_test, y_train, y_test
 
 
-def run_svm_workload(workload_name, x_train, x_test, y_train, y_test, C=1.0, kernel='linear'):
-    gamma = 1.0 / x_train.shape[1]
-    # Create C-SVM classifier
-    clf = SVC(C=C, kernel=kernel, max_iter=-1, cache_size=cache_size,
-              tol=tol, gamma=gamma)
+def run_svm_workload(workload_name, x_train, x_test, y_train, y_test, task, **params):
+    if task == 'svr':
+        scater = StandardScaler().fit(x_train, y_train)
+        x_train = scater.transform(x_train)
+        x_test = scater.transform(x_test)
 
+        clf = SVR(**params, cache_size=cache_size, tol=tol)
+        def metric_call(x, y): return mean_squared_error(x, y, squared=True)
+        def predict_call(clf, x): return clf.predict(x)
+        metric_name = 'rmse'
+    elif task == 'svc':
+        clf = SVC(**params, cache_size=cache_size, tol=tol)
+        metric_call = accuracy_score
+        metric_name = 'accuracy'
+        def predict_call(clf, x): return clf.predict(x)
+    elif task == 'svc_proba':
+        clf = SVC(**params, cache_size=cache_size, tol=tol, probability=True)
+        def predict_call(clf, x): return clf.predict_proba(x)
+        metric_call = log_loss
+        metric_name = 'log_loss'
+    else:
+        raise ValueError('Incorrect name a task {}'.format(task))
+
+    print('{}:{{ n_samples : {}; n_features : {}; n_classes : {} }};'.format(
+        workload_name, x_train.shape[0], x_train.shape[1], len(np.unique(y_train))))
+    print("params:{", end='')
+    for i, v in params.items():
+        print(" ", i, ":", v, end=';')
+    print(end=' };\n')
     t0 = timeit.default_timer()
     clf.fit(x_train, y_train)
     t1 = timeit.default_timer()
     time_fit_train_run = t1 - t0
 
+    print('Fit   [Train n_samples:{:6d}]: {:6.2f} sec. n_sv: {}'.format(
+        x_train.shape[0], time_fit_train_run, clf.support_.shape[0]))
+
     t0 = timeit.default_timer()
-    y_pred_train = clf.predict(x_train)
+    pred_train = predict_call(clf, x_train)
     t1 = timeit.default_timer()
     time_predict_train_run = t1 - t0
-    acc_train = accuracy_score(y_train, y_pred_train)
+    acc_train = metric_call(y_train, pred_train)
+
+    print('Infer [Train n_samples:{:6d}]: {:6.2f} sec. {} score: {:.5f}'.format(
+        x_train.shape[0], time_predict_train_run, metric_name, acc_train))
 
     t0 = timeit.default_timer()
-    y_pred = clf.predict(x_test)
+    pred_test = predict_call(clf, x_test)
     t1 = timeit.default_timer()
     time_predict_test_run = t1 - t0
-    acc_test = accuracy_score(y_test, y_pred)
+    acc_test = metric_call(y_test, pred_test)
 
-    print('{}: n_samples:{}; n_features:{}; n_classes:{}; C:{}; kernel:{}'.format(
-        workload_name, x_train.shape[0], x_train.shape[1], len(np.unique(y_train)), C, kernel))
-    print('Fit   [Train n_samples:{:6d}]: {:6.2f} sec'.format(
-        x_train.shape[0], time_fit_train_run))
-    print('Infer [Train n_samples:{:6d}]: {:6.2f} sec. accuracy_score: {:.3f}'.format(
-        x_train.shape[0], time_predict_train_run, acc_train))
-    print('Infer [Test  n_samples:{:6d}]: {:6.2f} sec. accuracy_score: {:.3f}'.format(
-        x_test.shape[0], time_predict_test_run, acc_test))
+    print('Infer [Test  n_samples:{:6d}]: {:6.2f} sec. {} score: {:.5f}'.format(
+        x_test.shape[0], time_predict_test_run, metric_name, acc_test))
 
+
+if arg_name_task in ['svc', 'svc_proba']:
+    workloads = svc_workloads
+elif arg_name_task in ['svr']:
+    workloads = svr_workloads
+else:
+    workloads = {}
 
 for name_workload, params in workloads.items():
     if arg_name_workload in [name_workload, 'all']:
-        x_train, x_test, y_train, y_test = load_data(name_workload)
-        run_svm_workload(name_workload, x_train, x_test, y_train, y_test,
-                         C=params['C'], kernel=params['kernel'])
+        try:
+            x_train, x_test, y_train, y_test = load_data(name_workload)
+            run_svm_workload(name_workload, x_train, x_test,
+                             y_train, y_test, arg_name_task, **params)
+
+        except FileNotFoundError:
+            print('WARNING! Workload: {} not found'.format(name_workload))

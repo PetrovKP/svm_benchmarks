@@ -31,8 +31,12 @@ from skin_segmentation.skin_segmentation_loader import skin_segmentation
 from covertype.covertype_loader import covertype
 from creditcard.creditcard_loader import creditcard
 from codrnanorm.codrnanorm_loader import codrnanorm
-# from aloi.aloi_loader import aloi
-# from bng.bng_loader import bng
+from year_prediction.year_prediction_loader import year_prediction
+from california_housing.california_housing_loader import california_housing
+from fried.fried_loader import fried
+from twodplanes.twodplanes_loader import twodplanes
+from aloi.aloi_loader import aloi
+from letter.letter_loader import letter
 
 dataset_loaders = {
     "a9a": a9a,
@@ -46,8 +50,12 @@ dataset_loaders = {
     "covertype": covertype,
     "creditcard": creditcard,
     "codrnanorm": codrnanorm,
-    # "aloi": aloi,
-    # "bng": bng,
+    "year_prediction": year_prediction,
+    "california_housing": california_housing,
+    "fried": fried,
+    "2dplanes": twodplanes,
+    "aloi": aloi,
+    "letter": letter,
     # "news20": news20,
     # "rcv1": rcv1,
 }
