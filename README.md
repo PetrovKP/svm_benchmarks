@@ -3,7 +3,7 @@
 ### Dependencies
 
 ```bash
-conda install -c intel scikit-learn pandas
+pip install -r requirements.txt
 ```
 
 ### Setting up the environment
@@ -34,14 +34,16 @@ For runs of the selected workload:
 python benchmarks/svm_workload_run.py --workload a9a
 ```
 
-You can choose library: `sklearn`, `cuml`, `thundersvm`, `idp_sklearn`
-For runs of the selected library. 
-By default using sklearn with oneDAL optimizations (`idp_sklearn`). 
+You can choose library: `sklearn`, `cuml`, `thundersvm`, `sklearn-intelex`
+For runs of the selected library.
+By default using sklearn with oneDAL optimizations (`sklearn-intelex`).
 Example for thundersvm library:
 
 ```bash
-python benchmarks/svm_workload_run.py --library thundersvm 
+python benchmarks/svm_workload_run.py --library thundersvm
 ```
 
-*NOTE: for thundersvm/cuml runs need thundersvm/cuml library. 
+*NOTE: for thundersvm/cuml runs need thundersvm/cuml library.
 Can you download with help pip or conda*
+
+You can also choose a task for the svm: `svc`, `svc_proba`, `svr`. By default `svc`
