@@ -44,12 +44,12 @@ arg_name_task = args.task
 times_worloads = []
 
 if arg_name_library == 'sklearn-intelex':
-    from daal4py.sklearn import patch_sklearn
+    from sklearnex import patch_sklearn
     patch_sklearn()
     from sklearn.svm import SVR, SVC
     from sklearn.metrics import mean_squared_error, accuracy_score, log_loss
 elif arg_name_library == 'onedal':
-    from daal4py.onedal.svm import SVR, SVC
+    from onedal.svm import SVR, SVC
     from sklearn.metrics import mean_squared_error, accuracy_score, log_loss
 elif arg_name_library == 'sklearn':
     from sklearn.svm import SVR, SVC
@@ -62,7 +62,7 @@ elif arg_name_library == 'cuml':
     from cuml.metrics import mean_squared_error, accuracy_score, log_loss
 
 
-cache_size = 2*1024  # 8 GB
+cache_size = 2*1024  # 2 GB
 tol = 1e-3
 
 
@@ -78,15 +78,20 @@ svc_workloads = {
     'covertype':         {'C': 100.0,  'kernel': 'rbf'},
     'creditcard':        {'C': 100.0,  'kernel': 'linear'},
     'codrnanorm':        {'C': 1000.0, 'kernel': 'linear'},
-    'aloi':              {'C': 10.0,   'kernel': 'rbf'},
-    'letter':            {'C': 10.0,   'kernel': 'rbf'},
+    # 'aloi':              {'C': 10.0,   'kernel': 'rbf'},
+    # 'letter':            {'C': 10.0,   'kernel': 'rbf'},
 }
 
+poly_str = 'polynomial' if arg_name_library == 'thunder' else 'poly'
+
 svr_workloads = {
-    # 'year_prediction':  {'C': 100.0,  'kernel': 'linear'},
-    # 'california_housing':  {'C': 0.1,  'kernel': 'poly'},
-    'fried': {'C': 2.0,  'kernel': 'linear'},
+    'california_housing':  {'C': 0.1,  'kernel': poly_str},
+    'fried': {'C': 2.0,  'kernel': 'rbf'},
     'twodplanes': {'C': 10.0,  'kernel': 'rbf', 'epsilon': 0.5},
+    'medical_charges_nominal': {'C': 10.0, 'kernel': poly_str, 'epsilon': 0.1, 'degree': 2},
+    'yolanda':  {'C': 10,  'kernel': 'rbf'},
+    # 'yolanda':  {'C': 10,  'kernel': 'linear'},
+    'year_prediction':  {'C': 1.0,  'kernel': 'linear'},
 }
 
 
@@ -113,6 +118,12 @@ def run_svm_workload(workload_name, x_train, x_test, y_train, y_test, task, **pa
         scater = StandardScaler().fit(x_train, y_train)
         x_train = scater.transform(x_train)
         x_test = scater.transform(x_test)
+
+        if workload_name in ['medical_charges_nominal']:
+            scater = StandardScaler().fit(y_train)
+            y_train = scater.transform(y_train)
+            y_test = scater.transform(y_test)
+
 
         clf = SVR(**params, cache_size=cache_size, tol=tol)
         def metric_call(x, y): return mean_squared_error(x, y, squared=True)
