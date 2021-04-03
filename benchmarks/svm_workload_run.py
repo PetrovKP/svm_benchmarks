@@ -18,7 +18,6 @@ import argparse
 import os
 import timeit
 import numpy as np
-import pandas as pd
 import warnings
 
 from sklearn.preprocessing import StandardScaler
@@ -60,6 +59,11 @@ elif arg_name_library == 'thunder':
 elif arg_name_library == 'cuml':
     from cuml import SVR, SVC
     from cuml.metrics import mean_squared_error, accuracy_score, log_loss
+
+if arg_name_library == 'cuml':
+    import pandas as pd
+else:
+    import cudf as pd
 
 
 cache_size = 2*1024  # 2 GB
