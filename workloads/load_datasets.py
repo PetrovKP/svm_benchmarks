@@ -37,6 +37,8 @@ from fried.fried_loader import fried
 from twodplanes.twodplanes_loader import twodplanes
 from aloi.aloi_loader import aloi
 from letter.letter_loader import letter
+from medical_charges_nominal.medical_charges_nominal_loader import medical_charges_nominal
+from yolanda.yolanda_loader import yolanda
 
 dataset_loaders = {
     "a9a": a9a,
@@ -56,6 +58,8 @@ dataset_loaders = {
     "2dplanes": twodplanes,
     "aloi": aloi,
     "letter": letter,
+    "medical_charges_nominal": medical_charges_nominal,
+    "yolanda": yolanda,
     # "news20": news20,
     # "rcv1": rcv1,
 }
