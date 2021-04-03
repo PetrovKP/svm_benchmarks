@@ -92,8 +92,8 @@ svr_workloads = {
     'yolanda':  {'C': 10,  'kernel': 'rbf'},
     # 'yolanda':  {'C': 10,  'kernel': 'linear'},
     'year_prediction':  {'C': 1.0,  'kernel': 'linear'},
-}
 
+}
 
 def load_data(name_workload):
     root_dir = os.environ['DATASETSROOT']
@@ -123,7 +123,6 @@ def run_svm_workload(workload_name, x_train, x_test, y_train, y_test, task, **pa
             scater = StandardScaler().fit(y_train)
             y_train = scater.transform(y_train)
             y_test = scater.transform(y_test)
-
 
         clf = SVR(**params, cache_size=cache_size, tol=tol)
         def metric_call(x, y): return mean_squared_error(x, y, squared=True)
