@@ -166,7 +166,7 @@ def run_svm_workload(workload_name, x_train, x_test, y_train, y_test, task, **pa
         metric_name = 'log_loss'
     elif task == 'nusvr':
         if arg_name_library == 'cuml':
-            raise ValueError("cuml don't have NuSVR")
+            raise ValueError("cuml doesn't have NuSVR")
 
         scater = StandardScaler().fit(x_train, y_train)
         x_train = scater.transform(x_train)
@@ -183,7 +183,7 @@ def run_svm_workload(workload_name, x_train, x_test, y_train, y_test, task, **pa
         metric_name = 'rmse'
     elif task == 'nusvc':
         if arg_name_library == 'cuml':
-            raise ValueError("cuml don't have NuSVC")
+            raise ValueError("cuml doesn't have NuSVC")
 
         clf = NuSVC(**params, cache_size=cache_size, tol=tol)
         metric_call = accuracy_score
@@ -191,7 +191,7 @@ def run_svm_workload(workload_name, x_train, x_test, y_train, y_test, task, **pa
         def predict_call(clf, x): return clf.predict(x)
     elif task == 'nusvc_proba':
         if arg_name_library == 'cuml':
-            raise ValueError("cuml don't have NuSVC")
+            raise ValueError("cuml doesn't have NuSVC")
 
         clf = NuSVC(**params, cache_size=cache_size, tol=tol, probability=True)
         def predict_call(clf, x): return clf.predict_proba(x)
