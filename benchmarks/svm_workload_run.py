@@ -30,7 +30,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--workload', type=str, default='all',
                     help='Choose worload for SVM. Default all worloads')
 parser.add_argument('--task', type=str, default='svc',
-                    choices=['svc', 'svc_proba', 'svr'],
+                    choices=['svc', 'svc_proba', 'svr', 'nusvc', 'nusvr'],
                     help='Choose task for SVM. Default svc')
 parser.add_argument('--library', type=str, default='sklearn-intelex',
                     choices=['sklearn', 'onedal',
@@ -46,19 +46,21 @@ times_worloads = []
 if arg_name_library == 'sklearn-intelex':
     from sklearnex import patch_sklearn
     patch_sklearn()
-    from sklearn.svm import SVR, SVC
+    from sklearn.svm import SVR, SVC, NuSVC, NuSVR
     from sklearn.metrics import mean_squared_error, accuracy_score, log_loss
 elif arg_name_library == 'onedal':
-    from onedal.svm import SVR, SVC
+    from onedal.svm import SVR, SVC, NuSVC, NuSVR
     from sklearn.metrics import mean_squared_error, accuracy_score, log_loss
 elif arg_name_library == 'sklearn':
-    from sklearn.svm import SVR, SVC
+    from sklearn.svm import SVR, SVC, NuSVC, NuSVR
     from sklearn.metrics import mean_squared_error, accuracy_score, log_loss
 elif arg_name_library == 'thunder':
-    from thundersvm import SVR, SVC
+    from thundersvm import SVR, SVC, NuSVC, NuSVR
     from sklearn.metrics import mean_squared_error, accuracy_score, log_loss
 elif arg_name_library == 'cuml':
     from cuml import SVR, SVC
+    NuSVC = None
+    NuSVR = None
     from cuml.metrics import mean_squared_error, accuracy_score, log_loss
 
 
@@ -94,6 +96,30 @@ svr_workloads = {
     'year_prediction':  {'C': 1.0,  'kernel': 'linear'},
 
 }
+
+nusvc_workloads = {
+    'a9a':               {'nu': 0.25,  'kernel': 'rbf'}, # (39073, 123) (9769, 123)
+    'ijcnn':             {'nu': 0.17,  'kernel': 'linear'}, # (153344, 22) (38337,  22)
+    'sensit':            {'nu': 0.5,   'kernel': 'linear'}, # (78822, 100) (19706, 100)
+    'connect':           {'nu': 0.25,  'kernel': 'linear'}, # (60801, 123) (6756, 123)
+    'gisette':           {'nu': 0.07,  'kernel': 'linear'}, # (6000, 5000) (1000, 5000)
+    'mnist':             {'nu': 0.5,   'kernel': 'linear'}, # (60000, 784) (10000, 784)
+    'klaverjas':         {'nu': 0.7,   'kernel': 'rbf'}, # (196308, 32) (785233, 32)
+    'skin_segmentation': {'nu': 0.01,  'kernel': 'rbf'}, # (196045, 3) (49012, 3)
+    'covertype':         {'nu': 0.01,  'kernel': 'rbf'}, # (348607, 54) (232405, 54)
+    'creditcard':        {'nu': 0.002, 'kernel': 'linear'}, # (256326, 29) (28481, 29)
+    'codrnanorm':        {'nu': 0.15,  'kernel': 'linear'}, # (390852, 8) (97713, 8)
+}
+
+nusvr_workloads = {
+    'california_housing':      {'nu': 0.17, 'C': 0.1,  'kernel': poly_str}, # (18576, 8), (2064, 8)
+    'fried':                   {'nu': 0.8,  'C': 2.0,  'kernel': 'rbf'}, # (32614, 10), (8154, 10)
+    'twodplanes':              {'nu': 0.5,  'C': 10.0, 'kernel': 'rbf'}, # (106288, 10), (70859, 10)
+    'medical_charges_nominal': {'nu': 0.5,  'C': 10.0, 'kernel': poly_str, 'degree': 2}, # (130452, 11), (32613, 11)
+    'yolanda':                 {'nu': 0.5,  'C': 10.0, 'kernel': 'rbf'}, # (240000, 100), (160000, 100)
+    'year_prediction':         {'nu': 0.5,  'C': 1.0,  'kernel': 'linear'}, # (463715, 90), (51629, 90)
+}
+
 
 def load_data(name_workload):
     root_dir = os.environ['DATASETSROOT']
@@ -138,6 +164,39 @@ def run_svm_workload(workload_name, x_train, x_test, y_train, y_test, task, **pa
         def predict_call(clf, x): return clf.predict_proba(x)
         metric_call = log_loss
         metric_name = 'log_loss'
+    elif task == 'nusvr':
+        if arg_name_library == 'cuml':
+            raise ValueError("cuml don't have NuSVR")
+
+        scater = StandardScaler().fit(x_train, y_train)
+        x_train = scater.transform(x_train)
+        x_test = scater.transform(x_test)
+
+        if workload_name in ['medical_charges_nominal']:
+            scater = StandardScaler().fit(y_train)
+            y_train = scater.transform(y_train)
+            y_test = scater.transform(y_test)
+
+        clf = NuSVR(**params, cache_size=cache_size, tol=tol)
+        def metric_call(x, y): return mean_squared_error(x, y, squared=True)
+        def predict_call(clf, x): return clf.predict(x)
+        metric_name = 'rmse'
+    elif task == 'nusvc':
+        if arg_name_library == 'cuml':
+            raise ValueError("cuml don't have NuSVC")
+
+        clf = NuSVC(**params, cache_size=cache_size, tol=tol)
+        metric_call = accuracy_score
+        metric_name = 'accuracy'
+        def predict_call(clf, x): return clf.predict(x)
+    elif task == 'nusvc_proba':
+        if arg_name_library == 'cuml':
+            raise ValueError("cuml don't have NuSVC")
+
+        clf = NuSVC(**params, cache_size=cache_size, tol=tol, probability=True)
+        def predict_call(clf, x): return clf.predict_proba(x)
+        metric_call = log_loss
+        metric_name = 'log_loss'
     else:
         raise ValueError('Incorrect name a task {}'.format(task))
 
@@ -152,8 +211,9 @@ def run_svm_workload(workload_name, x_train, x_test, y_train, y_test, task, **pa
     t1 = timeit.default_timer()
     time_fit_train_run = t1 - t0
 
+    n_sv = clf.n_support_ if arg_name_library == 'thunder' else clf.support_.shape[0]
     print('Fit   [Train n_samples:{:6d}]: {:6.2f} sec. n_sv: {}'.format(
-        x_train.shape[0], time_fit_train_run, clf.support_.shape[0]))
+        x_train.shape[0], time_fit_train_run, n_sv))
 
     t0 = timeit.default_timer()
     pred_train = predict_call(clf, x_train)
@@ -178,6 +238,10 @@ if arg_name_task in ['svc', 'svc_proba']:
     workloads = svc_workloads
 elif arg_name_task in ['svr']:
     workloads = svr_workloads
+elif arg_name_task in ['nusvc', 'nusvc_proba']:
+    workloads = nusvc_workloads
+elif arg_name_task in ['nusvr']:
+    workloads = nusvr_workloads
 else:
     workloads = {}
 
